@@ -5,7 +5,6 @@ import { IUser } from "../models/user.model";
 import { UserMongoRepository } from "../repositories/user.repository";
 import { HttpException } from "../exceptions/http-exception";
 import { ApiResponseHelper } from "../utils/apihelper.util";
-
 declare global {
   namespace Express {
     interface Request {
@@ -64,3 +63,4 @@ export const adminMiddleware = async (
     );
   }
 };
+
