@@ -87,4 +87,35 @@ export class UserController {
       );
     }
   }
+  async updateUser(req: Request, res: Response) {
+    try {
+      const userId = req.user._id;
+      console.log("User ID from token:", userId);
+      const userData = UpdateUserDTO.safeParse(req.body);
+      console.log(userData);
+      if (!userData.success) {
+        return ApiResponseHelper.error(
+          res,
+          z.prettifyError(userData.error),
+          400,
+        );
+      }
+
+      if (req.file) {
+        userData.data.profileImage = "/uploads/" + req.file.filename; // add profileImage path to body
+      }
+      const updatedUser = await userService.updateUser(userId, userData.data);
+      return ApiResponseHelper.success(
+        res,
+        updatedUser,
+        "User updated successfully",
+      );
+    } catch (error: Error | any | unknown) {
+      return ApiResponseHelper.error(
+        res,
+        error.message || "Internal Server Error",
+        error.status || 500,
+      );
+    }
+  }
 }

@@ -3,7 +3,7 @@ import path from "path";
 import { Request } from "express";
 import { HttpException } from "../exceptions/http-exception";
 import fs from "fs";
-// import { v4 as uuidv4 } from "uuid";
+import { v4 as uuidv4 } from "uuid";
 const storage = multer.diskStorage({
   destination: (
     req: Request,
