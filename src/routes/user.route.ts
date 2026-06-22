@@ -8,5 +8,7 @@ const userController = new UserController();
 userRouter.post("/register", userController.createUser);
 userRouter.post("/login", userController.loginUser);
 
+userRouter.get("/whoami", authorizedMiddleware, userController.whoami);
+
 userRouter.get("/profile", authorizedMiddleware, userController.getProfile);
 export default userRouter;
