@@ -68,4 +68,23 @@ export class UserController {
       });
     }
   };
+  async whoami(req: Request, res: Response) {
+    try {
+      const user = req.user;
+      if (!user) {
+        return ApiResponseHelper.error(res, "User not found", 404);
+      }
+      return ApiResponseHelper.success(
+        res,
+        user,
+        "User details fetched successfully",
+      );
+    } catch (error: Error | any | unknown) {
+      return ApiResponseHelper.error(
+        res,
+        error.message || "Internal Server Error",
+        error.status || 500,
+      );
+    }
+  }
 }
