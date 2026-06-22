@@ -7,6 +7,7 @@ import morgan from "morgan";
 
 // routes
 import userRoutes from "./routes/user.route";
+import path from "path";
 
 const app: Application = express();
 const corsOptions = {
@@ -18,6 +19,8 @@ app.use(cors(corsOptions)); // enable CORS for all routes
 app.use(express.json()); // json input
 app.use(express.urlencoded({ extended: true })); // x-www-form-urlencoded
 app.use(morgan("combined")); // log all requests
+
+app.use("/uploads", express.static(path.join(__dirname, "../uploads"))); // serve static files from uploads folder
 
 app.use("/api/v1/auth", userRoutes); // user related routes
 
