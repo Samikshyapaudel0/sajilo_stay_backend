@@ -1,10 +1,10 @@
 import { Router } from "express";
-import { AdminUserController } from "../../controllers/admin/user.controller";
 import {
   authorizedMiddleware,
   adminMiddleware,
 } from "../../middlewares/authorized.middleware";
 import { uploads } from "../../middlewares/upload.middleware";
+import { AdminUserController } from "../../controllers/admin/user.controller";
 
 const router = Router();
 const adminUserController = new AdminUserController();
