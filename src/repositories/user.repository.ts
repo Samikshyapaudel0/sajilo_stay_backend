@@ -9,12 +9,26 @@ export interface IUserRepository {
   getAll(): Promise<IUser[]>;
   update(id: string, user: Partial<IUser>): Promise<IUser | null>;
   delete(id: string): Promise<boolean>;
+  getAllPaginated(
+    page: number,
+    limit: number,
+    search?: string,
+  ): Promise<{ data: IUser[]; total: number }>;
 }
 export class UserMongoRepository implements IUserRepository {
   async getUserById(id: string): Promise<IUser | null> {
-    const found = await UserModel.findOne({ _id: id });
+    // const found = await UserModel.findOne({ _id: id });
+    const found = await UserModel.findById(id).select("-password");
     return found;
   }
+
+  // async getUserById(id: string) {
+  //   return await UserModel.findById(id);
+  // }
+
+  // async getUserByIdWithoutPassword(id: string) {
+  //   return await UserModel.findById(id).select("-password");
+  // }
   async getUserByEmail(email: string): Promise<IUser | null> {
     const found = await UserModel.findOne({ email });
     return found;
@@ -38,5 +52,55 @@ export class UserMongoRepository implements IUserRepository {
   async delete(id: string): Promise<boolean> {
     const deleted = await UserModel.findByIdAndDelete(id);
     return !!deleted;
+  }
+  // async getAllPaginated(
+  //   page: number,
+  //   limit: number,
+  //   search?: string,
+  // ): Promise<{ data: IUser[]; total: number }> {
+  //   const query: any = {};
+  //   if (search) {
+  //     query.$or = [
+  //       { username: { $regex: search, $options: "i" } },
+  //       { email: { $regex: search, $options: "i" } },
+  //     ];
+  //   }
+  //   const total = await UserModel.countDocuments(query);
+  //   // const data = await UserModel.find(query)
+  //   //   .skip((page - 1) * limit)
+  //   //   .limit(limit);
+  //   const data = await UserModel.find(query)
+  //     .select("-password") // Hide password
+  //     .sort({ createdAt: -1 }) // Show newest users first
+  //     .skip((page - 1) * limit)
+  //     .limit(limit);
+  //   return { data, total };
+  // }
+
+  async getAllPaginated(
+    page: number,
+    limit: number,
+    search?: string,
+  ): Promise<{ data: IUser[]; total: number }> {
+    const query: any = {};
+
+    if (search) {
+      query.$or = [
+        { firstName: { $regex: search, $options: "i" } },
+        { lastName: { $regex: search, $options: "i" } },
+        { username: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const total = await UserModel.countDocuments(query);
+
+    const data = await UserModel.find(query)
+      .select("-password")
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    return { data, total };
   }
 }

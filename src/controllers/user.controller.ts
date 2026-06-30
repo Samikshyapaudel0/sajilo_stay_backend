@@ -1,7 +1,7 @@
 
 import { UserService } from "../services/userservice";
 import { z } from "zod";
-import { CreateUserDTO, LoginUserDTO, UpdateUserDTO } from "../dtos/user.dto";
+import { CreateUserDTO, LoginUserDTO, UpdateUserDTO , UpdatePasswordDTO} from "../dtos/user.dto";
 import { ApiResponseHelper } from "../utils/apihelper.util";
 import { Request, Response } from "express";
 const userService = new UserService();
@@ -109,6 +109,48 @@ export class UserController {
         res,
         updatedUser,
         "User updated successfully",
+      );
+    } catch (error: Error | any | unknown) {
+      return ApiResponseHelper.error(
+        res,
+        error.message || "Internal Server Error",
+        error.status || 500,
+      );
+    }
+  }
+  async updatePassword(req: Request, res: Response) {
+    try {
+      const userId = req.user._id;
+
+      const userData = UpdatePasswordDTO.safeParse(req.body);
+
+      if (!userData.success) {
+        return ApiResponseHelper.error(
+          res,
+          z.prettifyError(userData.error),
+          400,
+        );
+      }
+      const checkPasswordValid = await userService.checkPassword(
+        userId,
+        userData.data.currentPassword,
+      );
+      if (!checkPasswordValid) {
+        return ApiResponseHelper.error(
+          res,
+          "Current password is incorrect",
+          400,
+        );
+      }
+
+      const password = userData.data.newPassword;
+      // can use the same service function for updating user, since it can update any field, just pass the new password in the data
+      const updatedUser = await userService.updateUser(userId, { password });
+
+      return ApiResponseHelper.success(
+        res,
+        updatedUser,
+        "Password updated successfully",
       );
     } catch (error: Error | any | unknown) {
       return ApiResponseHelper.error(
