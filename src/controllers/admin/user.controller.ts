@@ -1,8 +1,8 @@
-import { UserService } from "../../services/user.service";
 import { z } from "zod";
 import { CreateUserDTO, LoginUserDTO, UpdateUserDTO, UpdatePasswordDTO, CreateUserDTOAdmin } from "../../dtos/user.dto";
 import { ApiResponseHelper } from "../../utils/apihelper.util";
 import { Request, Response } from "express";
+import { UserService } from "../../services/userservice";
 const userService = new UserService();
 
 interface QueryParams {

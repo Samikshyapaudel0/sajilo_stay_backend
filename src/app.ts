@@ -7,6 +7,7 @@ import morgan from "morgan";
 
 // routes
 import userRoutes from "./routes/user.route";
+import adminUserRoutes from "./routes/admin/user.route";
 import path from "path";
 
 const app: Application = express();
@@ -23,6 +24,10 @@ app.use(morgan("combined")); // log all requests
 app.use("/uploads", express.static(path.join(__dirname, "../uploads"))); // serve static files from uploads folder
 
 app.use("/api/v1/auth", userRoutes); // user related routes
+
+// admin routes
+app.use("/api/v1/admin/users", adminUserRoutes); // admin user related routes
+
 
 // global api handler (at the last)
 app.use((req: Request, res: Response) => {

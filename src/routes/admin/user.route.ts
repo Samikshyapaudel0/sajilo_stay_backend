@@ -3,8 +3,8 @@ import {
   authorizedMiddleware,
   adminMiddleware,
 } from "../../middlewares/authorized.middleware";
-import { uploads } from "../../middlewares/upload.middleware";
 import { AdminUserController } from "../../controllers/admin/user.controller";
+import { uploads } from "../../middlewares/upload.middlewares";
 
 const router = Router();
 const adminUserController = new AdminUserController();
