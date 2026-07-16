@@ -8,6 +8,9 @@ import morgan from "morgan";
 // routes
 import userRoutes from "./routes/user.route";
 import adminUserRoutes from "./routes/admin/user.route";
+import hostUserRoutes from "./routes/host/user.route";
+import adminPropertyRoutes from "./routes/admin/property.route";
+import hostPropertyRoutes from "./routes/host/property.route";
 import path from "path";
 
 const app: Application = express();
@@ -27,6 +30,11 @@ app.use("/api/v1/auth", userRoutes); // user related routes
 
 // admin routes
 app.use("/api/v1/admin/users", adminUserRoutes); // admin user related routes
+app.use("/api/v1/admin/properties", adminPropertyRoutes); // admin property related routes
+
+// host routes
+app.use("/api/v1/host", hostUserRoutes); // host user related routes
+app.use("/api/v1/host/properties", hostPropertyRoutes); // host property related routes
 
 
 // global api handler (at the last)
