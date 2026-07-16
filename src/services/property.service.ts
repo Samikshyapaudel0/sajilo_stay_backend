@@ -72,6 +72,55 @@ export class PropertyService {
     return properties;
   }
 
+  async getAvailablePropertiesPaginated(query: {
+    page?: string;
+    limit?: string;
+    search?: string;
+    category?: string;
+    sortBy?: string;
+    sortOrder?: string;
+  }) {
+    const currentPage =
+      query.page && parseInt(query.page) > 0 ? parseInt(query.page) : 1;
+    const currentLimit =
+      query.limit && parseInt(query.limit) > 0 ? parseInt(query.limit) : 10;
+    const currentSearch =
+      query.search && query.search.trim() !== "" ? query.search.trim() : undefined;
+    const currentCategory =
+      query.category && query.category.trim() !== ""
+        ? query.category.trim()
+        : undefined;
+    const sortOrder: "asc" | "desc" =
+      query.sortOrder === "asc" ? "asc" : "desc";
+
+    const { data, total } = await propertyRepository.getAvailablePaginated(
+      currentPage,
+      currentLimit,
+      {
+        search: currentSearch,
+        category: currentCategory,
+        sortBy: query.sortBy,
+        sortOrder,
+      },
+    );
+    const totalPages = Math.ceil(total / currentLimit);
+    const pagination = {
+      page: currentPage,
+      limit: currentLimit,
+      totalPages: totalPages,
+      total: total,
+    };
+    return { data, pagination };
+  }
+
+  async getAvailablePropertyById(id: string): Promise<IProperty> {
+    const property = await propertyRepository.getAvailablePropertyById(id);
+    if (!property) {
+      throw new HttpException(404, "Property not found");
+    }
+    return property;
+  }
+
   async getAllPropertyPaginated(page?: string, limit?: string, search?: string) {
     const currentPage = page && parseInt(page) > 0 ? parseInt(page) : 1;
     const currentLimit = limit && parseInt(limit) > 0 ? parseInt(limit) : 10;

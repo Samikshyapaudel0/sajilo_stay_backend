@@ -11,6 +11,7 @@ import adminUserRoutes from "./routes/admin/user.route";
 import hostUserRoutes from "./routes/host/user.route";
 import adminPropertyRoutes from "./routes/admin/property.route";
 import hostPropertyRoutes from "./routes/host/property.route";
+import propertyRoutes from "./routes/property.route";
 import path from "path";
 
 const app: Application = express();
@@ -27,6 +28,9 @@ app.use(morgan("combined")); // log all requests
 app.use("/uploads", express.static(path.join(__dirname, "../uploads"))); // serve static files from uploads folder
 
 app.use("/api/v1/auth", userRoutes); // user related routes
+
+// public routes
+app.use("/api/v1/properties", propertyRoutes); // public property browsing routes
 
 // admin routes
 app.use("/api/v1/admin/users", adminUserRoutes); // admin user related routes
