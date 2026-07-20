@@ -29,6 +29,9 @@ export class UserController {
   }
 
   async loginUser(req: Request, res: Response) {
+    console.log("========== LOGIN ==========");
+    console.log("Content-Type:", req.headers["content-type"]);
+    console.log("Body:", req.body);
     try {
       const parsedData = LoginUserDTO.safeParse(req.body);
       if (!parsedData.success) {

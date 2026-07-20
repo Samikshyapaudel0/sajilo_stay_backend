@@ -31,10 +31,14 @@ const fileFilter = (
   file: Express.Multer.File,
   cb: multer.FileFilterCallback,
 ) => {
-  if (file.mimetype === "image/jpeg" || file.mimetype === "image/png") {
+  if (
+    file.mimetype === "image/jpeg" ||
+    file.mimetype === "image/png" ||
+    file.mimetype === "image/webp"
+  ) {
     cb(null, true); // accept file
   } else {
-    cb(new HttpException(400, "Only JPEG and PNG files are allowed")); // reject file
+    cb(new HttpException(400, "Only JPEG, PNG, and WebP files are allowed")); // reject file
   }
 };
 const upload = multer({

@@ -11,6 +11,8 @@ export interface IPropertyRepository {
     page: number,
     limit: number,
     search?: string,
+    category?: string,
+    sortBy?: string,
   ): Promise<{ data: IProperty[]; total: number }>;
 }
 
@@ -49,8 +51,10 @@ export class PropertyMongoRepository implements IPropertyRepository {
     page: number,
     limit: number,
     search?: string,
+    category?: string,
+    sortBy?: string,
   ): Promise<{ data: IProperty[]; total: number }> {
-    const query: any = {};
+    const query: any = { status: "available" };
 
     if (search) {
       query.$or = [
@@ -61,10 +65,34 @@ export class PropertyMongoRepository implements IPropertyRepository {
       ];
     }
 
+    if (category) {
+      query.category = category;
+    }
+
     const total = await PropertyModel.countDocuments(query);
 
+    let sortOptions: any = { createdAt: -1 };
+    if (sortBy) {
+      switch (sortBy) {
+        case "price_asc":
+          sortOptions = { pricePerNight: 1 };
+          break;
+        case "price_desc":
+          sortOptions = { pricePerNight: -1 };
+          break;
+        case "newest":
+          sortOptions = { createdAt: -1 };
+          break;
+        case "oldest":
+          sortOptions = { createdAt: 1 };
+          break;
+        default:
+          sortOptions = { createdAt: -1 };
+      }
+    }
+
     const data = await PropertyModel.find(query)
-      .sort({ createdAt: -1 })
+      .sort(sortOptions)
       .skip((page - 1) * limit)
       .limit(limit);
 

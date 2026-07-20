@@ -62,6 +62,17 @@ export class PropertyService {
     return property;
   }
 
+  async getAvailablePropertyById(id: string): Promise<IProperty | null> {
+    const property = await propertyRepository.getPropertyById(id);
+    if (!property) {
+      throw new HttpException(404, "Property not found");
+    }
+    if (property.status !== "available") {
+      throw new HttpException(404, "Property not available");
+    }
+    return property;
+  }
+
   async getPropertiesByHost(hostId: string): Promise<IProperty[]> {
     const properties = await propertyRepository.getPropertiesByHost(hostId);
     return properties;
@@ -72,15 +83,19 @@ export class PropertyService {
     return properties;
   }
 
-  async getAllPropertyPaginated(page?: string, limit?: string, search?: string) {
+  async getAllPropertyPaginated(page?: string, limit?: string, search?: string, category?: string, sortBy?: string) {
     const currentPage = page && parseInt(page) > 0 ? parseInt(page) : 1;
     const currentLimit = limit && parseInt(limit) > 0 ? parseInt(limit) : 10;
     const currentSearch = search && search.trim() !== "" ? search : undefined;
+    const currentCategory = category && category.trim() !== "" ? category : undefined;
+    const currentSortBy = sortBy && sortBy.trim() !== "" ? sortBy : undefined;
 
     const { data, total } = await propertyRepository.getAllPaginated(
       currentPage,
       currentLimit,
       currentSearch,
+      currentCategory,
+      currentSortBy,
     );
     const totalPages = Math.ceil(total / currentLimit);
     const pagination = {
