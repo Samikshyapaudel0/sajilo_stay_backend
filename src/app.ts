@@ -76,6 +76,7 @@ import hostPropertyRoutes from "./routes/host/property.route";
 import propertyRoutes from "./routes/property.route";
 import bookingRoutes from "./routes/booking.route";
 import hostBookingRoutes from "./routes/host/booking.route";
+import favoriteRoutes from "./routes/favorite.route";
 import path from "path";
 const app: Application = express();
 const corsOptions = {
@@ -92,7 +93,14 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.json()); // json input
+// app.use(express.json()); // json input
+app.use((req, res, next) => {
+  console.log("Incoming Content-Type:", req.headers["content-type"]);
+  next();
+});
+
+app.use(express.json());
+
 app.use(express.urlencoded({ extended: true })); // x-www-form-urlencoded
 app.use(morgan("combined")); // log all requests
 
@@ -110,6 +118,7 @@ app.use("/api/v1/host", hostUserRoutes); // host user related routes
 app.use("/api/v1/host/properties", hostPropertyRoutes); // host property related routes
 app.use("/api/v1/bookings", bookingRoutes); // user booking related routes
 app.use("/api/v1/host/bookings", hostBookingRoutes); // host booking related routes
+app.use("/api/v1/favorites", favoriteRoutes); // user favorite related routes
 
 // global api handler (at the last)
 app.use((req: Request, res: Response) => {
