@@ -76,6 +76,14 @@ export class UserMongoRepository implements IUserRepository {
   //     .limit(limit);
   //   return { data, total };
   // }
+  async findById(id: string): Promise<IUser | null> {
+    const foundUser = await UserModel.findById(id);
+    return foundUser;
+  }
+  async findByEmail(email: string): Promise<IUser | null> {
+    const foundUser = await UserModel.findOne({ email: email });
+    return foundUser;
+  }
 
   async getAllPaginated(
     page: number,

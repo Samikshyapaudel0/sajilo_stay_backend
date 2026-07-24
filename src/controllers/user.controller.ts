@@ -4,6 +4,7 @@ import { z } from "zod";
 import { CreateUserDTO, LoginUserDTO, UpdateUserDTO , UpdatePasswordDTO} from "../dtos/user.dto";
 import { ApiResponseHelper } from "../utils/apihelper.util";
 import { Request, Response } from "express";
+import { HttpException } from "../exceptions/http-exception";
 const userService = new UserService();
 
 export class UserController {
@@ -29,6 +30,9 @@ export class UserController {
   }
 
   async loginUser(req: Request, res: Response) {
+    console.log("========== LOGIN ==========");
+    console.log("Content-Type:", req.headers["content-type"]);
+    console.log("Body:", req.body);
     try {
       const parsedData = LoginUserDTO.safeParse(req.body);
       if (!parsedData.success) {
@@ -153,6 +157,56 @@ export class UserController {
         "Password updated successfully",
       );
     } catch (error: Error | any | unknown) {
+      return ApiResponseHelper.error(
+        res,
+        error.message || "Internal Server Error",
+        error.status || 500,
+      );
+    }
+  }
+  async sendResetPasswordEmail(req: Request, res: Response) {
+      console.log("===== REQUEST PASSWORD RESET =====");
+      console.log("Headers:", req.headers["content-type"]);
+      console.log("Body:", req.body);
+
+    try {
+      const email = req.body.email;
+       console.log("Email:", email);
+      // can be replaced with DTO
+      if (!email) {
+        throw new HttpException(400, "Email is required");
+      }
+      const { token, user } = await userService.sendResetPasswordEmail(email);
+      return ApiResponseHelper.success(
+        res,
+        { token, user },
+        
+        "Reset password email sent successfully",
+      );
+    } catch (error: Error | any) {
+      return ApiResponseHelper.error(
+        res,
+        error.message || "Internal Server Error",
+        error.status || 500,
+      );
+    }
+  }
+  async resetPassword(req: Request, res: Response) {
+    try {
+      const token = req.params.token as string;
+      const { newPassword } = req.body;
+      // can be replaced with DTO
+      if (!token || !newPassword) {
+        throw new HttpException(400, "Token and new password are required");
+      }
+      const updatedUser = await userService.resetPassword(token, newPassword);
+      return ApiResponseHelper.success(
+        res,
+        updatedUser,
+        
+        "Password reset successfully",
+      );
+    } catch (error: Error | any) {
       return ApiResponseHelper.error(
         res,
         error.message || "Internal Server Error",

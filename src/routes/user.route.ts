@@ -26,4 +26,8 @@ userRouter.put(
 );
 
 userRouter.get("/profile", authorizedMiddleware, userController.getProfile);
+
+userRouter.post("/request-password-reset", userController.sendResetPasswordEmail);
+
+userRouter.post("/reset-password/:token", userController.resetPassword);
 export default userRouter;
