@@ -1,4 +1,5 @@
 import { FavoriteModel, IFavorite } from "../models/favorite.model";
+import mongoose from "mongoose";
 
 export interface IFavoriteRepository {
   createFavorite(favorite: Partial<IFavorite>): Promise<IFavorite>;
@@ -27,7 +28,7 @@ export class FavoriteMongoRepository implements IFavoriteRepository {
   }
 
   async getFavoritesByUserId(userId: string): Promise<IFavorite[]> {
-    const found = await FavoriteModel.find({ userId })
+    const found = await FavoriteModel.find({ userId: new mongoose.Types.ObjectId(userId) })
       .populate(
         "propertyId",
         "title location images pricePerNight category status hostId",
@@ -40,7 +41,10 @@ export class FavoriteMongoRepository implements IFavoriteRepository {
     userId: string,
     propertyId: string,
   ): Promise<IFavorite | null> {
-    const found = await FavoriteModel.findOne({ userId, propertyId });
+    const found = await FavoriteModel.findOne({
+      userId: new mongoose.Types.ObjectId(userId),
+      propertyId: new mongoose.Types.ObjectId(propertyId),
+    });
     return found;
   }
 
@@ -48,7 +52,10 @@ export class FavoriteMongoRepository implements IFavoriteRepository {
     userId: string,
     propertyId: string,
   ): Promise<boolean> {
-    const result = await FavoriteModel.deleteOne({ userId, propertyId });
+    const result = await FavoriteModel.deleteOne({
+      userId: new mongoose.Types.ObjectId(userId),
+      propertyId: new mongoose.Types.ObjectId(propertyId),
+    });
     return result.deletedCount > 0;
   }
 

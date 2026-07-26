@@ -18,7 +18,10 @@ export const authorizedMiddleware = async (
   res: Response,
   next: NextFunction,
 ) => {
+
   try {
+      console.log("AUTHORIZED MIDDLEWARE HIT");
+
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer "))
       throw new HttpException(401, "Unauthorized JWT invalid");
@@ -31,9 +34,15 @@ export const authorizedMiddleware = async (
     } // make function async
     const user = await userRepository.getUserById(decodedToken.id);
     if (!user) throw new HttpException(401, "Unauthorized user not found");
-    req.user = user; // attach user to request (like tag)
+    req.user = user; 
+        console.log("CALLING NEXT()");
+      // attach user to request (like tag)
     return next();
   } catch (err: Error | any) {
+     console.error("MIDDLEWARE ERROR");
+     console.error(err);
+     console.error(err.stack);
+
     return ApiResponseHelper.error(
       res,
       err.message || "Internal Server Error",
@@ -85,4 +94,3 @@ export const hostMiddleware = async (
     );
   }
 };
-

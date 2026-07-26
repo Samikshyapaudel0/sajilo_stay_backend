@@ -2,6 +2,7 @@ import { FavoriteMongoRepository } from "../repositories/favorite.repository";
 import { PropertyMongoRepository } from "../repositories/property.repository";
 import { IFavorite } from "../models/favorite.model";
 import { HttpException } from "../exceptions/http-exception";
+import mongoose from "mongoose";
 
 const favoriteRepository = new FavoriteMongoRepository();
 const propertyRepository = new PropertyMongoRepository();
@@ -44,8 +45,8 @@ export class FavoriteService {
     }
 
     const favorite = await favoriteRepository.createFavorite({
-      userId: userId as any,
-      propertyId: propertyId as any,
+      userId: new mongoose.Types.ObjectId(userId),
+      propertyId: new mongoose.Types.ObjectId(propertyId),
     });
 
     const populatedFavorite = await favoriteRepository.getFavoriteById(

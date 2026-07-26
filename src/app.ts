@@ -77,6 +77,7 @@ import propertyRoutes from "./routes/property.route";
 import bookingRoutes from "./routes/booking.route";
 import hostBookingRoutes from "./routes/host/booking.route";
 import favoriteRoutes from "./routes/favorite.route";
+import paymentRoutes from "./routes/payment.route";
 import path from "path";
 const app: Application = express();
 const corsOptions = {
@@ -119,6 +120,7 @@ app.use("/api/v1/host/properties", hostPropertyRoutes); // host property related
 app.use("/api/v1/bookings", bookingRoutes); // user booking related routes
 app.use("/api/v1/host/bookings", hostBookingRoutes); // host booking related routes
 app.use("/api/v1/favorites", favoriteRoutes); // user favorite related routes
+app.use("/api/v1/payments", paymentRoutes); // user payment related routes
 
 // global api handler (at the last)
 app.use((req: Request, res: Response) => {

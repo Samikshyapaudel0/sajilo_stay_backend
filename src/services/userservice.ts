@@ -117,25 +117,77 @@ export class UserService {
     return user;
   }
 
+  // async loginUser(loginData: LoginUserDTO) {
+  //   const user = await userRepository.getUserByEmail(loginData.email);
+  //   if (!user) {
+  //     throw new HttpException(400, "Invalid email");
+  //   }
+  //   const isPasswordValid = await bycryptjs.compare(
+  //     loginData.password, // client password
+  //     user.password, // database password
+  //   );
+  //   if (!isPasswordValid) {
+  //     throw new HttpException(400, "Invalid password");
+  //   }
+  //   console.log("LOGIN SECRET:", SECRET_KEY);
+
+  //   const token = jwt.sign(
+  //     { id: user._id, email: user.email, role: user.role }, // payload
+  //     SECRET_KEY,
+  //     { expiresIn: "30d" },
+  //   );
+  //   console.log("NEW TOKEN:", token);
+
+  //   return { user, token };
+  // }
   async loginUser(loginData: LoginUserDTO) {
-    const user = await userRepository.getUserByEmail(loginData.email);
-    if (!user) {
-      throw new HttpException(400, "Invalid email");
+    try {
+      console.log("Looking for user...");
+
+      const user = await userRepository.getUserByEmail(loginData.email);
+      console.log("User:", user);
+
+      if (!user) {
+        throw new HttpException(400, "Invalid email");
+      }
+
+      console.log("Comparing password...");
+
+      const isPasswordValid = await bycryptjs.compare(
+        loginData.password,
+        user.password,
+      );
+
+      console.log("Password valid:", isPasswordValid);
+
+      if (!isPasswordValid) {
+        throw new HttpException(400, "Invalid password");
+      }
+
+      console.log("SECRET:", SECRET_KEY);
+
+      const token = jwt.sign(
+        {
+          id: user._id,
+          email: user.email,
+          role: user.role,
+        },
+        SECRET_KEY,
+        {
+          expiresIn: "30d",
+        },
+      );
+
+      console.log("TOKEN CREATED");
+
+      return { user, token };
+    } catch (e) {
+      console.error("LOGIN ERROR:");
+      console.error(e);
+      throw e;
     }
-    const isPasswordValid = await bycryptjs.compare(
-      loginData.password, // client password
-      user.password, // database password
-    );
-    if (!isPasswordValid) {
-      throw new HttpException(400, "Invalid password");
-    }
-    const token = jwt.sign(
-      { id: user._id, email: user.email, role: user.role }, // payload
-      SECRET_KEY,
-      { expiresIn: "30d" },
-    );
-    return { user, token };
   }
+
   async checkPassword(
     userId: string,
     currentPassword: string,
