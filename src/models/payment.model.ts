@@ -7,9 +7,9 @@ export interface IPayment extends Document {
   userId: mongoose.Types.ObjectId;
   amount: number;
   status: PaymentStatus;
-  khaltiTransactionId?: string;
-  khaltiToken?: string;
-  khaltiIdx?: string;
+  esewaTransactionId?: string;
+  esewaProductId?: string;
+  esewaSignature?: string;
   pidx?: string;
   _id: mongoose.Types.ObjectId;
   createdAt: Date;
@@ -26,9 +26,9 @@ const PaymentMongoSchema: Schema = new Schema<IPayment>(
       enum: ["pending", "completed", "failed", "refunded"],
       default: "pending",
     },
-    khaltiTransactionId: { type: String },
-    khaltiToken: { type: String },
-    khaltiIdx: { type: String },
+    esewaTransactionId: { type: String },
+    esewaProductId: { type: String },
+    esewaSignature: { type: String },
     pidx: { type: String },
   },
   { timestamps: true },

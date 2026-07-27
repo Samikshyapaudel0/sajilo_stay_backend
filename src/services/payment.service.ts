@@ -4,36 +4,54 @@ import { InitiatePaymentDTO, VerifyPaymentDTO } from "../dtos/payment.dto";
 import { IPayment, PaymentStatus } from "../models/payment.model";
 import { IBooking, BookingStatus } from "../models/booking.model";
 import { HttpException } from "../exceptions/http-exception";
+import { createHash } from "crypto";
 
 const paymentRepository = new PaymentMongoRepository();
 const bookingRepository = new BookingMongoRepository();
 
-interface KhaltiInitiateResponse {
-  payment_url: string;
-  pidx: string;
-  total_amount: number;
-  status: string;
-}
-
-interface KhaltiVerifyResponse {
-  pidx: string;
+interface EsewaVerifyResponse {
   transaction_id: string;
-  amount: number;
-  total_amount: number;
   status: string;
+  total_amount: number;
 }
 
 export class PaymentService {
-  private readonly khaltiSecretKey: string;
-  private readonly khaltiApiUrl: string;
+  private readonly esewaMerchantCode: string;
+  private readonly esewaSecretKey: string;
+  private readonly esewaEnvironment: string;
+  private readonly esewaApiUrl: string;
 
   constructor() {
-    this.khaltiSecretKey = process.env.KHALTI_SECRET_KEY || "";
-    this.khaltiApiUrl = process.env.KHALTI_API_URL || "https://a.khalti.com/api/v2";
+    this.esewaMerchantCode = process.env.ESEWA_MERCHANT_CODE || "";
+    this.esewaSecretKey = process.env.ESEWA_SECRET_KEY || "";
+    this.esewaEnvironment = process.env.ESEWA_ENVIRONMENT || "TEST";
     
-    if (!this.khaltiSecretKey) {
-      console.warn("KHALTI_SECRET_KEY not set in environment variables");
+    if (this.esewaEnvironment === "TEST") {
+      this.esewaApiUrl = "https://uat.esewa.com.np";
+    } else {
+      this.esewaApiUrl = "https://esewa.com.np";
     }
+    
+    if (!this.esewaMerchantCode || !this.esewaSecretKey) {
+      console.warn("ESEWA_MERCHANT_CODE or ESEWA_SECRET_KEY not set in environment variables");
+    }
+  }
+
+  private generateSignature(totalAmount: number, transactionUuid: string, productCode: string): string {
+    const signatureString = `total_amount=${totalAmount},transaction_uuid=${transactionUuid},product_code=${productCode}`;
+    return createHash("sha256")
+      .update(signatureString + this.esewaSecretKey)
+      .digest("hex");
+  }
+
+  private verifySignature(
+    totalAmount: number,
+    transactionUuid: string,
+    productCode: string,
+    receivedSignature: string,
+  ): boolean {
+    const expectedSignature = this.generateSignature(totalAmount, transactionUuid, productCode);
+    return expectedSignature === receivedSignature;
   }
 
   async initiatePayment(
@@ -64,66 +82,42 @@ export class PaymentService {
       throw new HttpException(400, "Payment already completed for this booking");
     }
 
-    const khaltiPayload = {
-      return_url: paymentData.return_url,
-      website_url: paymentData.website_url,
-      amount: paymentData.amount * 100, // Khalti expects amount in paisa
-      purchase_order_id: paymentData.purchase_order_id,
-      purchase_order_name: paymentData.purchase_order_name,
-      customer_info: {
-        name: "Customer",
-        email: "customer@example.com",
-        phone: "9800000000",
-      },
+    // Generate transaction UUID (using purchase_order_id)
+    const transactionUuid = paymentData.purchase_order_id;
+    const productCode = this.esewaMerchantCode;
+    const totalAmount = paymentData.amount;
+
+    // Generate signature
+    const signature = this.generateSignature(totalAmount, transactionUuid, productCode);
+
+    // Create payment record
+    const payment = await paymentRepository.createPayment({
+      bookingId: booking._id,
+      userId: userId as any,
+      amount: paymentData.amount,
+      status: "pending",
+      pidx: transactionUuid,
+      esewaProductId: productCode,
+      esewaSignature: signature,
+    });
+
+    // Construct eSewa payment URL
+    const paymentUrl = `${this.esewaApiUrl}/epay/main`;
+    const paymentUrlWithParams = `${paymentUrl}?scd=${productCode}&amt=${totalAmount}&pid=${transactionUuid}&su=${paymentData.return_url}&fu=${paymentData.website_url}`;
+
+    console.log("========== ESEWA PAYMENT INITIATION ==========");
+    console.log("Payment URL:", paymentUrlWithParams);
+    console.log("Transaction UUID:", transactionUuid);
+    console.log("Product Code:", productCode);
+    console.log("Amount:", totalAmount);
+    console.log("Signature:", signature);
+    console.log("==============================================");
+
+    return {
+      paymentUrl: paymentUrlWithParams,
+      pidx: transactionUuid,
+      payment,
     };
-
-    try {
-      const khaltiResponse = await fetch(`${this.khaltiApiUrl}/epayment/initiate/`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Key ${this.khaltiSecretKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(khaltiPayload),
-      });
-
-      const khaltiData: KhaltiInitiateResponse = await khaltiResponse.json();
-      console.log("========== KHALTI RESPONSE ==========");
-      console.log("Status:", khaltiResponse.status);
-      console.log("Response:", khaltiData);
-      console.log("=====================================");
-      // if (!khaltiResponse.ok || !khaltiData.payment_url) {
-      //   throw new HttpException(500, "Failed to initiate Khalti payment");
-      // }
-      if (!khaltiResponse.ok) {
-        throw new HttpException(
-          khaltiResponse.status,
-          JSON.stringify(khaltiData),
-        );
-      }
-
-      const payment = await paymentRepository.createPayment({
-        bookingId: booking._id,
-        userId: userId as any,
-        amount: paymentData.amount,
-        status: "pending",
-        pidx: khaltiData.pidx,
-      });
-
-      return {
-        paymentUrl: khaltiData.payment_url,
-        pidx: khaltiData.pidx,
-        payment,
-      };
-    } catch (error: Error | any) {
-      console.log("========== KHALTI ERROR ==========");
-      console.log("Status:", error.response?.status);
-      console.log("Data:", error.response?.data);
-      console.log("Message:", error.message);
-      console.log("==================================");
-      //console.error("Khalti initiate payment error:", error);
-      throw new HttpException(500, "Failed to initiate payment with Khalti");
-    }
   }
 
   async verifyPayment(
@@ -148,33 +142,56 @@ export class PaymentService {
     }
 
     try {
-      const khaltiResponse = await fetch(`${this.khaltiApiUrl}/epayment/lookup/`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Key ${this.khaltiSecretKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ pidx: paymentData.pidx }),
+      // Verify payment with eSewa API
+      const transactionUuid = paymentData.pidx;
+      const productCode = payment.esewaProductId || this.esewaMerchantCode;
+      const totalAmount = payment.amount;
+
+      const verifyUrl = `${this.esewaApiUrl}/epay/transrec`;
+      const verifyParams = new URLSearchParams({
+        amt: totalAmount.toString(),
+        pid: transactionUuid,
+        scd: productCode,
       });
 
-      const khaltiData: KhaltiVerifyResponse = await khaltiResponse.json();
+      console.log("========== ESEWA PAYMENT VERIFICATION ==========");
+      console.log("Verify URL:", verifyUrl);
+      console.log("Transaction UUID:", transactionUuid);
+      console.log("Product Code:", productCode);
+      console.log("Amount:", totalAmount);
+      console.log("=================================================");
 
-      if (!khaltiResponse.ok) {
+      const esewaResponse = await fetch(`${verifyUrl}?${verifyParams}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      const responseText = await esewaResponse.text();
+      console.log("eSewa Response:", responseText);
+
+      // eSewa returns response in format: "transaction_id,amount,status"
+      const responseParts = responseText.split(",");
+      if (responseParts.length < 3) {
         await paymentRepository.update(payment._id.toString(), {
           status: "failed" as PaymentStatus,
         });
-        throw new HttpException(500, "Failed to verify payment with Khalti");
+        throw new HttpException(500, "Invalid response from eSewa");
       }
 
-      if (khaltiData.status !== "Completed") {
+      const esewaTransactionId = responseParts[0].trim();
+      const esewaAmount = parseFloat(responseParts[1].trim());
+      const esewaStatus = responseParts[2].trim();
+
+      if (esewaStatus !== "Completed" && esewaStatus !== "COMPLETE") {
         await paymentRepository.update(payment._id.toString(), {
           status: "failed" as PaymentStatus,
         });
         throw new HttpException(400, "Payment not completed");
       }
 
-      const amountInRupees = khaltiData.total_amount / 100;
-      if (Math.abs(amountInRupees - payment.amount) > 1) {
+      if (Math.abs(esewaAmount - payment.amount) > 1) {
         await paymentRepository.update(payment._id.toString(), {
           status: "failed" as PaymentStatus,
         });
@@ -183,7 +200,7 @@ export class PaymentService {
 
       const updatedPayment = await paymentRepository.update(payment._id.toString(), {
         status: "completed" as PaymentStatus,
-        khaltiTransactionId: khaltiData.transaction_id,
+        esewaTransactionId: esewaTransactionId,
       });
 
       if (!updatedPayment) {
@@ -200,7 +217,7 @@ export class PaymentService {
 
       return { payment: updatedPayment, booking };
     } catch (error: Error | any) {
-      console.error("Khalti verify payment error:", error);
+      console.error("eSewa verify payment error:", error);
       if (error instanceof HttpException) {
         throw error;
       }
