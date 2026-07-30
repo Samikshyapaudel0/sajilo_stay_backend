@@ -13,6 +13,8 @@ export const EMAIL_PASS: string = process.env.EMAIL_PASS || "password123";
 export const CLIENT_URL: string =
   process.env.CLIENT_URL || "http://localhost:3000";
 
+export const GEMINI_API_KEY: string = process.env.GEMINI_API_KEY || "";
+
 // same as
 // export {
 //     PORT,

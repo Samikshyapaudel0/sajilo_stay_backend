@@ -70,6 +70,7 @@ import morgan from "morgan";
 // routes
 import userRoutes from "./routes/user.route";
 import adminUserRoutes from "./routes/admin/user.route";
+import adminBookingRoutes from "./routes/admin/booking.route";
 import hostUserRoutes from "./routes/host/user.route";
 import adminPropertyRoutes from "./routes/admin/property.route";
 import hostPropertyRoutes from "./routes/host/property.route";
@@ -78,6 +79,7 @@ import bookingRoutes from "./routes/booking.route";
 import hostBookingRoutes from "./routes/host/booking.route";
 import favoriteRoutes from "./routes/favorite.route";
 import paymentRoutes from "./routes/payment.route";
+import chatRoutes from "./routes/chat.route";
 import path from "path";
 const app: Application = express();
 const corsOptions = {
@@ -90,7 +92,10 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 app.use((req, res, next) => {
-  console.log(req.method, req.originalUrl);
+  console.log("==== ALL REQUESTS ====", req.method, req.originalUrl);
+  console.log("Headers:", JSON.stringify(req.headers, null, 2));
+  console.log("Body:", JSON.stringify(req.body, null, 2));
+  console.log("Query:", JSON.stringify(req.query, null, 2));
   next();
 });
 
@@ -113,6 +118,7 @@ app.use("/api/v1/properties", propertyRoutes); // public property related routes
 // admin routes
 app.use("/api/v1/admin/users", adminUserRoutes); // admin user related routes
 app.use("/api/v1/admin/properties", adminPropertyRoutes); // admin property related routes
+app.use("/api/v1/admin/bookings", adminBookingRoutes); // admin booking related routes
 
 // host routes
 app.use("/api/v1/host", hostUserRoutes); // host user related routes
@@ -121,6 +127,8 @@ app.use("/api/v1/bookings", bookingRoutes); // user booking related routes
 app.use("/api/v1/host/bookings", hostBookingRoutes); // host booking related routes
 app.use("/api/v1/favorites", favoriteRoutes); // user favorite related routes
 app.use("/api/v1/payments", paymentRoutes); // user payment related routes
+app.use("/api/v1/chat", chatRoutes); // chat related routes
+console.log("Chat routes registered at /api/v1/chat");
 
 // global api handler (at the last)
 app.use((req: Request, res: Response) => {

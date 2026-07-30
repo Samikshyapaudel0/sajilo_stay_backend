@@ -1,10 +1,13 @@
 import { z } from "zod";
-import { CreatePropertyDTO, UpdatePropertyDTO } from "../../dtos/property.dto";
 import { ApiResponseHelper } from "../../utils/apihelper.util";
 import { Request, Response } from "express";
 import { PropertyService } from "../../services/property.service";
 
 const propertyService = new PropertyService();
+
+const UpdatePropertyStatusSchema = z.object({
+  status: z.enum(["available", "booked", "maintenance"]),
+});
 
 interface QueryParams {
   page?: string;
@@ -58,27 +61,30 @@ export class AdminPropertyController {
     }
   }
 
-  async updateProperty(req: Request, res: Response) {
+  async updatePropertyStatus(req: Request, res: Response) {
     try {
       const propertyId = req.params.id as string;
-      const propertyData = UpdatePropertyDTO.safeParse(req.body);
+      if (!propertyId) {
+        return ApiResponseHelper.error(res, "Property ID is required", 400);
+      }
 
-      if (!propertyData.success) {
+      const statusData = UpdatePropertyStatusSchema.safeParse(req.body);
+      if (!statusData.success) {
         return ApiResponseHelper.error(
           res,
-          z.prettifyError(propertyData.error),
+          z.prettifyError(statusData.error),
           400,
         );
       }
 
       const updatedProperty = await propertyService.updateProperty(
         propertyId,
-        propertyData.data,
+        statusData.data,
       );
       return ApiResponseHelper.success(
         res,
         updatedProperty,
-        "Property updated successfully",
+        "Property status updated successfully",
       );
     } catch (error: Error | any | unknown) {
       return ApiResponseHelper.error(

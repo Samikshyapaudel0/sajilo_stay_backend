@@ -174,4 +174,40 @@ export class BookingService {
 
     return formatBookingResponse(updatedBooking);
   }
+
+  // Admin methods
+  async getAllBookings(page?: string, limit?: string) {
+    const currentPage = page && parseInt(page) > 0 ? parseInt(page) : 1;
+    const currentLimit = limit && parseInt(limit) > 0 ? parseInt(limit) : 10;
+
+    const { data, total } = await bookingRepository.getAllBookingsPaginated(
+      currentPage,
+      currentLimit,
+    );
+
+    const formattedData = data.map(formatBookingResponse);
+    const pagination = {
+      page: currentPage,
+      limit: currentLimit,
+      total,
+    };
+
+    return { data: formattedData, pagination };
+  }
+
+  async updateBookingStatusByAdmin(id: string, newStatus: BookingStatus) {
+    const booking = await bookingRepository.getBookingById(id);
+    if (!booking) {
+      throw new HttpException(404, "Booking not found");
+    }
+
+    const updatedBooking = await bookingRepository.update(id, {
+      status: newStatus,
+    });
+    if (!updatedBooking) {
+      throw new HttpException(500, `Failed to update booking status`);
+    }
+
+    return formatBookingResponse(updatedBooking);
+  }
 }

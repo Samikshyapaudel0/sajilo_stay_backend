@@ -26,6 +26,12 @@ const UserMongoSchema: Schema = new Schema<IUser>(
   },
   {
     timestamps: true, // createdAt and updatedAt will be automatically added and managed by mongoose
+    toJSON: {
+      transform: function (doc, ret) {
+        delete ret.password;
+        return ret;
+      },
+    },
   },
 );
 export const UserModel = mongoose.model<IUser>(

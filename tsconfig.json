@@ -48,6 +48,7 @@
     "module": "nodenext",
     "target": "esnext",
     "outDir": "dist",
+    "rootDir": ".",
     "esModuleInterop": true,
     "strict": false,
     "skipLibCheck": true,

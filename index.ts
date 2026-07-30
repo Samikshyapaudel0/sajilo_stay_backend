@@ -7,10 +7,20 @@ import { connectToMongoDB } from "./src/database/mongodb";
 
 connectToMongoDB();
 
+const processId = process.pid;
+const startupTimestamp = new Date().toISOString();
+const uniqueId = `${startupTimestamp}-${processId}`;
+
 app.listen(
   API_PORT, // start backend in this PORT
   () => {
-    console.log(`Server: http://localhost:${API_PORT}`); // backtick
+    console.log(`========================================`);
+    console.log(`BACKEND INSTANCE STARTED`);
+    console.log(`Process ID: ${processId}`);
+    console.log(`Startup Time: ${startupTimestamp}`);
+    console.log(`Unique Instance ID: ${uniqueId}`);
+    console.log(`Server: http://localhost:${API_PORT}`);
+    console.log(`========================================`);
   },
 );
 // execute: npx tsx --watch index.ts

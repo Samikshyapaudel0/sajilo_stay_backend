@@ -4,6 +4,7 @@ export interface IPaymentRepository {
   createPayment(payment: Partial<IPayment>): Promise<IPayment>;
   getPaymentById(id: string): Promise<IPayment | null>;
   getPaymentByBookingId(bookingId: string): Promise<IPayment | null>;
+  getPaymentByPidx(pidx: string): Promise<IPayment | null>;
   getPaymentsByUserId(userId: string): Promise<IPayment[]>;
   update(id: string, payment: Partial<IPayment>): Promise<IPayment | null>;
   updateByPidx(pidx: string, payment: Partial<IPayment>): Promise<IPayment | null>;
@@ -25,6 +26,14 @@ export class PaymentMongoRepository implements IPaymentRepository {
 
   async getPaymentByBookingId(bookingId: string): Promise<IPayment | null> {
     const found = await PaymentModel.findOne({ bookingId }).populate(
+      "bookingId",
+      "checkInDate checkOutDate totalPrice status",
+    ).populate("userId", "firstName lastName email");
+    return found;
+  }
+
+  async getPaymentByPidx(pidx: string): Promise<IPayment | null> {
+    const found = await PaymentModel.findOne({ pidx }).populate(
       "bookingId",
       "checkInDate checkOutDate totalPrice status",
     ).populate("userId", "firstName lastName email");

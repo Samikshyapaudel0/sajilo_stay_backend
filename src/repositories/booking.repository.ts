@@ -11,6 +11,10 @@ export interface IBookingRepository {
     page: number,
     limit: number,
   ): Promise<{ data: IBooking[]; total: number }>;
+  getAllBookingsPaginated(
+    page: number,
+    limit: number,
+  ): Promise<{ data: IBooking[]; total: number }>;
 }
 
 export class BookingMongoRepository implements IBookingRepository {
@@ -58,6 +62,21 @@ export class BookingMongoRepository implements IBookingRepository {
     const total = await BookingModel.countDocuments(query);
     const data = await BookingModel.find(query)
       .populate("propertyId", "title location images")
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+    return { data, total };
+  }
+
+  async getAllBookingsPaginated(
+    page: number,
+    limit: number,
+  ): Promise<{ data: IBooking[]; total: number }> {
+    const total = await BookingModel.countDocuments();
+    const data = await BookingModel.find()
+      .populate("propertyId", "title location images")
+      .populate("userId", "firstName lastName email username")
+      .populate("hostId", "firstName lastName email username")
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit);

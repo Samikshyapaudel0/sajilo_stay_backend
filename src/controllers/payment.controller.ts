@@ -7,6 +7,63 @@ import { PaymentService } from "../services/payment.service";
 const paymentService = new PaymentService();
 
 export class PaymentController {
+  /**
+   * GET /api/v1/payments/esewa/callback
+   *
+   * Public (no-auth) endpoint. eSewa redirects the user here after a
+   * successful payment, appending a base64-encoded JSON payload as the
+   * `data` query parameter. We decode it and return structured JSON so
+   * the Flutter WebView can detect the URL and extract the transaction data.
+   */
+  async esewaCallback(req: Request, res: Response) {
+    try {
+      const rawData = req.query.data as string | undefined;
+      let decoded: Record<string, unknown> = {};
+
+      if (rawData) {
+        try {
+          decoded = JSON.parse(Buffer.from(rawData, "base64").toString("utf-8"));
+        } catch {
+          // keep decoded as empty object if parsing fails
+        }
+      }
+
+      console.log("========== ESEWA CALLBACK (SUCCESS) ==========");
+      console.log("Query:", req.query);
+      console.log("Decoded data:", decoded);
+      console.log("==============================================");
+
+      return res.status(200).json({
+        success: true,
+        message: "Payment callback received",
+        data: decoded,
+        raw: rawData ?? null,
+      });
+    } catch (error: Error | any) {
+      console.error("esewaCallback error:", error);
+      return res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+  }
+
+  /**
+   * GET /api/v1/payments/esewa/failure
+   *
+   * Public (no-auth) endpoint. eSewa redirects here when payment fails or
+   * is cancelled. Returns structured JSON the Flutter WebView can detect.
+   */
+  async esewaFailure(req: Request, res: Response) {
+    console.log("========== ESEWA CALLBACK (FAILURE) ==========");
+    console.log("Query:", req.query);
+    console.log("==============================================");
+
+    return res.status(200).json({
+      success: false,
+      message: "Payment failed or was cancelled",
+      data: req.query,
+    });
+  }
+
+
   async initiatePayment(req: Request, res: Response) {
     try {
       console.log("========== INITIATE PAYMENT REQUEST ==========");
@@ -37,7 +94,10 @@ export class PaymentController {
       return ApiResponseHelper.success(
         res,
         {
+          payment_url: result.payment_url,
           paymentUrl: result.paymentUrl,
+          formData: result.formData,
+          formAction: result.formAction,
           pidx: result.pidx,
           payment: result.payment,
         },

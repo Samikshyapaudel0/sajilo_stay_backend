@@ -11,17 +11,15 @@ declare global {
       user?: Record<string, any> | IUser;
     }
   }
-} // adding tag (user) to request, can use req.user
+} 
 let userRepository = new UserMongoRepository();
 export const authorizedMiddleware = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
-
   try {
       console.log("AUTHORIZED MIDDLEWARE HIT");
-
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer "))
       throw new HttpException(401, "Unauthorized JWT invalid");
@@ -34,7 +32,7 @@ export const authorizedMiddleware = async (
     } // make function async
     const user = await userRepository.getUserById(decodedToken.id);
     if (!user) throw new HttpException(401, "Unauthorized user not found");
-    req.user = user; 
+    req.user = user;
         console.log("CALLING NEXT()");
       // attach user to request (like tag)
     return next();
@@ -43,6 +41,14 @@ export const authorizedMiddleware = async (
      console.error(err);
      console.error(err.stack);
 
+    // Handle JWT verification errors specifically
+    if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
+      return ApiResponseHelper.error(
+        res,
+        "Invalid or expired token",
+        401,
+      );
+    }
     return ApiResponseHelper.error(
       res,
       err.message || "Internal Server Error",

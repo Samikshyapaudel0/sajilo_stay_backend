@@ -19,7 +19,7 @@ function formatFavoriteResponse(favorite: IFavorite) {
           _id: property._id,
           title: property.title,
           location: property.location,
-          imageUrl: property.images?.[0] || null,
+          images: property.images || [],
           pricePerNight: property.pricePerNight,
           category: property.category,
           status: property.status,

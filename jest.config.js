@@ -13,4 +13,8 @@ module.exports = {
   moduleFileExtensions: ['ts', 'js', 'json'],
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
   testTimeout: 10000,
+  transformIgnorePatterns: [
+    'node_modules/(?!(uuid))',
+  ],
+  maxWorkers: 1, // Run tests sequentially to avoid database state pollution
 };

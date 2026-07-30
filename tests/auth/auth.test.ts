@@ -10,6 +10,8 @@ describe('Auth Module Tests', () => {
     // Connect to test database
     const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/sajilo_test';
     await mongoose.connect(mongoUri);
+    // Clean up database before running tests
+    await UserModel.deleteMany({});
   });
 
   afterAll(async () => {

@@ -10,9 +10,11 @@ export const InitiatePaymentDTO = z.object({
 });
 
 export const VerifyPaymentDTO = z.object({
-  pidx: z.string().min(1, "Pidx is required"),
-  amount: z.number().min(1, "Amount must be greater than 0"),
+  pidx: z.string().optional(),
+  data: z.string().optional(),
+  amount: z.number().optional(),
   transaction_id: z.string().optional(),
+  bookingId: z.string().optional(),
 });
 
 export type InitiatePaymentDTO = z.infer<typeof InitiatePaymentDTO>;
